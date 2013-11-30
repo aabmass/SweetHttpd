@@ -2,6 +2,6 @@ bin/
 jar/
 lib
 javasrc.list
-plugin
+## plugin the package is named this!
 *~
 *.class
