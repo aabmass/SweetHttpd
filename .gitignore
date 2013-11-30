@@ -1,0 +1,7 @@
+bin/
+jar/
+lib
+javasrc.list
+plugin
+*~
+*.class
