@@ -8,8 +8,8 @@ public class NoMimeHandlerException extends RuntimeException {
     }
 
     public NoMimeHandlerException(String mimeType, Socket client) {
-        super("The mime type \"" + mimeType + "\" has no handler connection " + 
-              "with " + client.getInetAddress().getHostAddress() + ".");
+        super("The mime type \"" + mimeType + "\" has no handler for " + 
+              "connection with " + client.getInetAddress().getHostAddress() + ".");
     }
 
     public NoMimeHandlerException(String message) {

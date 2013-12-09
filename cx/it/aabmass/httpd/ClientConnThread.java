@@ -66,10 +66,8 @@ class ClientConnThread extends Thread {
                 file = new File(rootDir, "index.html");
             else
                 file = new File(rootDir, relativeFile);
-            //IO.writeToSocket(client, file, type); //hopefully new way works!
 
             Registrar.handleClientConnection(parseFileType(clientCommand), client, file);
-
         }
         try {
             in.close();
@@ -83,7 +81,8 @@ class ClientConnThread extends Thread {
      * this should parse mime types specified.
      **/
     private String parseFileType(String clientCommand) {
-        return clientCommand.split("Accept")[1].split(":")[1].split(",")[0].trim();
+        return clientCommand.split("Accept:")[1].split(",")[0]
+            .split("\n")[0].trim();
     }
 
     public void close() {

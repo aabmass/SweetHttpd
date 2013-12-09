@@ -42,7 +42,7 @@ public class ServerHttpd {
         }
     }
 
-        private void registerPlugins() {
+    private void registerPlugins() {
         for (Class c : this.pluginClasses) {
             try {
                 Registrar.registerPlugin((Plugin) c.newInstance());
