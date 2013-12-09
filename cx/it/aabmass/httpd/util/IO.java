@@ -30,16 +30,38 @@ public class IO {
         return endResult;
     }
 
-    // /** Takes file types currently specified in ServerHttpd **/
-    // public static void writeToSocket(Socket client, File file, int fileType) {
-    //     if (fileType == ServerHttpd.TEXT_HTML)
-    //         writeText(client, file);
-    //     else if (fileType == ServerHttpd.TEXT_CSS)
-    //         writeText(client, file);
-    //     else if (fileType == ServerHttpd.IMAGE_WEBP)
-    //         writeDataStream(client, file);
-    // }
+    public static void writeReaderToWriterChar(Reader in, Writer out) {
+        BufferedReader bIn = null;
+        BufferedWriter bOut = null;
 
+        try {
+            bIn = new BufferedReader(in);
+            bOut = new BufferedWriter(out);
+
+            String line = null;
+            while ((line = bIn.readLine()) != null) {
+                bOut.write(line);
+                bOut.newLine();
+            }
+            bOut.flush();
+        }
+        catch(IOException e) {
+            e.printStackTrace();
+        }
+        finally {
+            try {
+                if (bOut != null)
+                    bOut.close();
+                if (bIn != null)
+                    bIn.close();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Deprecated
     public static void writeInputStreamToSocket(Socket client, InputStream in) {
         BufferedReader bIn = null;
         BufferedWriter bOut = null;
