@@ -17,40 +17,22 @@ public class Registrar {
     /** singleton **/
     public static Registrar instance;
 
-    /** actual private data members **/
-    private boolean existUnloadedPlugins;
     private List<Plugin> registeredPlugins;
-    
-    /* Maps dataType String from the client commands to
-       the an appropriate integer identifier (index) */
-    private List<String> mimeTypes;
 
-    /* In conjungtion with mimeTypes data member, this maps each
-       unique identifier given to a mime string to a specific
-       Map of MimeHandlers that performs the correct action depending on
-       the type and file extention requested by the client. In the encapsulated
-       map, the String is the file extension. One might do:
-       
-       MimeHandler h = mimeIdentifierToHandler.get(someIndex)
-                       .get(someFileExtension);
-       
-       Note:
-       There may be multiple handlers for one mime type, but only
-       one for each mime type and file extention together!
-    */
-    private Map<Integer, Map<String, MimeHandler>> mimeIdentifierToHandler;
-
+    /**
+     * Maps MIME types (as strings) to another map. The second
+     * map maps file extensions (as strings) to MimeHandlers
+     */
+    private Map<String, Map<String, MimeHandler>> mimeTypeToHandler;
     private List<Thread> runningThreads;
-    
+
     private Registrar() {
-        this.existUnloadedPlugins = false;
         this.registeredPlugins = new ArrayList<Plugin>();
-        this.mimeTypes = new ArrayList<String>();
-        this.mimeIdentifierToHandler = new HashMap<Integer, Map<String, MimeHandler>>();
+        this.mimeTypeToHandler = new HashMap<String, Map<String, MimeHandler>>();
         initMimeTypes();
         this.runningThreads = new ArrayList<Thread>();
     }
-
+    
     private void initMimeTypes() {
         //needs implementation. Will load from a config file
         //and also some defaults from inside the getResourceAsStream
@@ -81,36 +63,21 @@ public class Registrar {
         p.onLoad();
     }
 
-    private int registerMimeTypeInst
-        (String typeName, String fileExt, MimeHandler handler) {
+    /** Is default arg is described at registerMimeType(...) **/
+    private void registerMimeTypeInst
+        (String typeName, String fileExt, boolean isDefault, MimeHandler handler) {
 
         Log.debug("Attempting to register handler \"" + handler.toString() + "\".");
 
-        int index = -1;
-        boolean alreadyRegistered = false;
-        if ((index = mimeTypes.indexOf(typeName)) != -1) alreadyRegistered = true;
-
-        if (!alreadyRegistered) {
-            mimeTypes.add(typeName);
-            index = mimeTypes.indexOf(typeName);
-            
-            Map<String, MimeHandler> m = new HashMap<String, MimeHandler>();
-            m.put(fileExt, handler);
-            mimeIdentifierToHandler.put(index, m);
-        }        
-        else {
-            Map<String, MimeHandler> m = mimeIdentifierToHandler.get(index);
-            
-            //make sure there isn't a handler yet
-            //for this extension or throw an error
-            if (m.containsKey(fileExt)) {
-                MimeHandler preexisting = m.get(fileExt);
-                Log.err(preexisting.toString());
-                throw new MultipleHandlerError(handler, fileExt);
-            }
-            m.put(fileExt, handler);
+        Map<String, MimeHandler> fileExtToHandler = mimeTypeToHandler.get(typeName);
+        if (fileExtToHandler == null) {
+            fileExtToHandler = new HashMap<String, MimeHandler>();
+            mimeTypeToHandler.put(typeName, fileExtToHandler);
         }
-        return index;
+        
+        if (isDefault)
+            fileExtToHandler.put("default", handler);
+        fileExtToHandler.put(fileExt, handler);
     }
 
     private void handleClientConnectionInst
@@ -122,15 +89,34 @@ public class Registrar {
         Log.debug(fileToServe.toString());
         String[] splitByDot = fileToServe.getName().split("\\.");
         String fileExt = splitByDot[splitByDot.length - 1];
+        String superficialType = mimeType.split("/")[0];
+
+        if (fileToServe.getName().split("\\.")[0].equals("favicon"))
+            mimeType = "image";
         
-        int mIdent = mimeTypes.indexOf(mimeType);
-        MimeHandler handler = 
-            mimeIdentifierToHandler.get(mIdent).get(fileExt);
+        //a primary and secondary attempt
+        Map<String, MimeHandler> stringToHandlerPri = mimeTypeToHandler.get(mimeType);
+        Map<String, MimeHandler> stringToHandlerSec = mimeTypeToHandler.get(superficialType);
+        MimeHandler[] handlersInPriority = new MimeHandler[4];
         
-        if (handler == null)
+        handlersInPriority[0] = (stringToHandlerPri == null ? null : stringToHandlerPri.get(fileExt));
+        handlersInPriority[1] = (stringToHandlerSec == null ? null : stringToHandlerSec.get(fileExt));
+        handlersInPriority[2] = (stringToHandlerPri == null ? null : stringToHandlerPri.get("default"));
+        handlersInPriority[3] = (stringToHandlerSec == null ? null : stringToHandlerSec.get("default"));
+        MimeHandler handler = null;
+        
+        //exhaust all possible handlers before an exception
+        for (MimeHandler m : handlersInPriority) {
+            if (m == null) continue;
+            handler = m;
+            break;
+        }
+        
+        if (handler == null) //give up and throw exception
             throw new NoMimeHandlerException(mimeType, client);
-        else
-            handler.handleClientConnection(client, fileToServe);
+        
+        Log.debug(handler.toString());
+        handler.handleClientConnection(client, fileToServe);
     }
 
     /** 
@@ -151,10 +137,17 @@ public class Registrar {
         getInstance().registerPluginInst(p);
     }
 
-    /* returns the mapping int that identifies the mimetype */
-    public static int registerMimeType
-        (String typeName, String fileExt, MimeHandler handler) {
-        return getInstance().registerMimeTypeInst(typeName, fileExt, handler);
+    /* returns the mapping int that identifies the mimetype. Is default 
+       is used if this handler should be used for this mime type if no
+       handler can be found for a specfic file extension. You still need
+       to register it with a file extension, however.
+
+       ie. if a client requested an image and there was no handler for the
+       filetype, we use the default image handler.
+    */
+    public static void registerMimeType
+        (String typeName, String fileExt, boolean isDefault, MimeHandler handler) {
+        getInstance().registerMimeTypeInst(typeName, fileExt, isDefault, handler);
     }
     
     /* this is called from a ClientConnThread exclusively */
