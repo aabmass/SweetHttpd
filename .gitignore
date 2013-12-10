@@ -2,6 +2,10 @@ bin/
 jar/
 lib
 javasrc.list
-## plugin the package is named this!
+plugins
 *~
 *.class
+
+## eclipse stuff
+.classpath
+.project
