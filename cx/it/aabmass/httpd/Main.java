@@ -20,9 +20,9 @@ class Main {
             System.exit(1);
         }
         
-        File pluginDir = new File("plugin");
+        File pluginDir = new File("plugins");
         pluginDir.mkdir();
-        Log.info("Created plugin directory " + pluginDir.getCanonicalPath().toString());
+        Log.info("Using plugin directory " + pluginDir.getCanonicalPath().toString());
 
         new ServerHttpd(port, rootDir, pluginDir);
     }

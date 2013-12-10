@@ -19,7 +19,7 @@ public class ImageHandler implements MimeHandler {
         
     }
     
-    public void handleClientConnection(final Socket client, File fileToServe) {
+    public void handleClientConnection(final Socket client, String fullCommand, File fileToServe) {
         if (!fileToServe.exists()) {
             Log.debug("Could not find image \"" + fileToServe.getName() + "\"");
             return;

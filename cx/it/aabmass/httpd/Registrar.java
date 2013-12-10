@@ -81,7 +81,7 @@ public class Registrar {
     }
 
     private void handleClientConnectionInst
-        (String mimeType, Socket client, File fileToServe) {
+        (String mimeType, String fullCommand, Socket client, File fileToServe) {
 
         //get file extension. Make sure we support filenames
         //like foo.tar -- future -- support bar.tar.gz
@@ -116,7 +116,7 @@ public class Registrar {
             throw new NoMimeHandlerException(mimeType, client);
         
         Log.debug(handler.toString());
-        handler.handleClientConnection(client, fileToServe);
+        handler.handleClientConnection(client, fullCommand, fileToServe);
     }
 
     /** 
@@ -152,9 +152,9 @@ public class Registrar {
     
     /* this is called from a ClientConnThread exclusively */
     public static void handleClientConnection
-        (String mimeType, Socket client, File fileToServe) {
+        (String mimeType, String fullCommand, Socket client, File fileToServe) {
         Log.debug("Requesting MimeHandler for type \"" + mimeType
                   + "\".");
-        getInstance().handleClientConnectionInst(mimeType, client, fileToServe);
+        getInstance().handleClientConnectionInst(mimeType, fullCommand, client, fileToServe);
     }
 }

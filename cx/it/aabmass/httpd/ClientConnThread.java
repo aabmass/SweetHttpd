@@ -51,23 +51,23 @@ class ClientConnThread extends Thread {
             e.printStackTrace();
         }
                 
-        Log.info("Beginning listening on port " + srv.getLocalPort() +
+        Log.debug("Beginning listening on port " + srv.getLocalPort() +
                  " to " + client.getInetAddress());
         Log.debug(clientCommand);
         
         /* now parse it up and handle it */
         String[] splitCommand = clientCommand.split(" ");
         String httpDirective = splitCommand[0].trim();
-        String relativeFile = splitCommand[1].trim();          
         
+        /* there are a few cases where the filename must be modified, namely
+           if some scripting language (php) uses things like blah.php?a=1 */
+        String relativeFile = (splitCommand.length == 0 ?
+                "index.html" : splitCommand[1].split("\\?")[0].trim());
+        
+        //other HTTP directives?
         if (httpDirective.equalsIgnoreCase("GET")) {
-            File file = null;
-            if (relativeFile.equalsIgnoreCase("/"))
-                file = new File(rootDir, "index.html");
-            else
-                file = new File(rootDir, relativeFile);
-
-            Registrar.handleClientConnection(parseFileType(clientCommand), client, file);
+            File file = new File(rootDir, relativeFile);
+            Registrar.handleClientConnection(parseFileType(clientCommand), clientCommand, client, file);
         }
         try {
             in.close();

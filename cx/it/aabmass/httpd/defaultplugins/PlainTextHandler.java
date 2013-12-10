@@ -15,7 +15,7 @@ public class PlainTextHandler implements MimeHandler {
 
     }
     
-    public void handleClientConnection(final Socket client, File fileToServe) {
+    public void handleClientConnection(final Socket client, String fullCommand, File fileToServe) {
         Reader in = null;
         Writer out = null;
         try {

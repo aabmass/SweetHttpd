@@ -11,7 +11,7 @@ public interface MimeHandler {
      * about the client. No connection work should be done with
      * the given Socket, just write to it.
      **/
-    public void handleClientConnection(final Socket client, File fileToServe);
+    public void handleClientConnection(final Socket client, String fullCommand, File fileToServe);
     
     /**
      * Returns the mime type name that this handler handles.
